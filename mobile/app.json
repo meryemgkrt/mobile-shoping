@@ -1,0 +1,7 @@
+{
+  "name": "mobile",
+  "displayName": "mobile",
+  "plugins": [
+    "expo-font"
+  ]
+}
