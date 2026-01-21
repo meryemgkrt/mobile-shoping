@@ -32,7 +32,6 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'ProductDeta
 const { width, height } = Dimensions.get('window');
 
 const ProductDetailsScreen = () => {
-  // ✅ 1. TÜM HOOK'LARI EN BAŞTA ÇAĞIR
   const route = useRoute<ProductDetailsScreenProp>();
   const navigation = useNavigation<NavigationProp>();
   const addToCart = useCartStore((state) => state.addToCart);
@@ -40,15 +39,29 @@ const ProductDetailsScreen = () => {
   const [quantity, setQuantity] = useState(1);
   const [modalVisible, setModalVisible] = useState(false);
 
-  // ✅ 2. HOOK'LARDAN SONRA DEĞİŞKENLER
   const { _id } = route.params;
   const productItem = ProductDataSample.find(item => item._id === _id);
+
+  if (!productItem) {
+    return (
+      <View style={{ flex: 1 }}>
+        <SafeAreaView style={styles.container}>
+          <Text style={styles.errorText}>Product not found</Text>
+        </SafeAreaView>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+          activeOpacity={0.7}
+        >
+          <ArrowLeft color={COLORS.primaryOrange} size={20} strokeWidth={2.5} />
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
-  // ✅ 3. FONKSİYONLAR
   const handleAddToCart = () => {
-    if (!productItem) return;
-
     for (let i = 0; i < quantity; i++) {
       addToCart({
         _id: productItem._id,
@@ -68,8 +81,7 @@ const ProductDetailsScreen = () => {
         {
           text: 'View Cart',
           onPress: () => {
-            // Tab navigator içindeki Cart'a git
-            navigation.navigate('MainTabs' as never, { screen: 'Cart' } as never);
+            navigation.goBack();
           },
         },
       ]
@@ -82,23 +94,6 @@ const ProductDetailsScreen = () => {
     navigation.goBack();
   };
 
-  // ✅ 4. EARLY RETURN EN SONDA
-  if (!productItem) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <Text style={styles.errorText}>Product not found</Text>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={handleGoBack}
-          activeOpacity={0.7}
-        >
-          <ArrowLeft color={COLORS.primaryOrange} size={20} strokeWidth={2.5} />
-        </TouchableOpacity>
-      </SafeAreaView>
-    );
-  }
-
-  // ✅ 5. RENDER
   return (
     <View style={{ flex: 1 }}>
       <SafeAreaView style={styles.container} edges={['top']}>
