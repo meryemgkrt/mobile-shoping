@@ -19,7 +19,7 @@
     "expo-font": "~14.0.10",
     "expo-linear-gradient": "~15.0.8",
     "expo-splash-screen": "~31.0.13",
-    "lottie-react-native": "^7.2.2",
+    "lottie-react-native": "^7.3.5",
     "lucide-react-native": "^0.562.0",
     "moti": "^0.30.0",
     "react": "19.2.0",
@@ -32,7 +32,8 @@
     "react-native-screens": "^4.19.0",
     "react-native-svg": "^15.15.1",
     "react-redux": "^9.2.0",
-    "redux-persist": "^6.0.0"
+    "redux-persist": "^6.0.0",
+    "zustand": "^5.0.10"
   },
   "overrides": {
     "react": "19.2.0",

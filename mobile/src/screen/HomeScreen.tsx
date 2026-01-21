@@ -26,7 +26,6 @@ import { RootStackParamList } from '../types';
 type HomeScreenPropType = NativeStackNavigationProp<RootStackParamList>;
 
 const HomeScreen = () => {
- 
   const navigation = useNavigation<HomeScreenPropType>();
   const [searchText, setSearchText] = useState('');
   const [isFocused, setIsFocused] = useState(false);
@@ -44,7 +43,6 @@ const HomeScreen = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  
   const animatedTitle = homeTitle.split(' ');
   const AllCategories = selectedCategory.category === 'All';
 
@@ -57,10 +55,6 @@ const HomeScreen = () => {
       item.name.toLowerCase().includes(searchText.toLowerCase()) ||
       item.brand.toLowerCase().includes(searchText.toLowerCase())
   );
-
-  const handleAddItemToTheCart = (item: any) => {
-    console.log('Added to cart:', item);
-  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -217,44 +211,38 @@ const HomeScreen = () => {
           renderItem={({ index, item }) => {
             const isLeftColumn = index % 2 === 0;
             return (
-              <TouchableOpacity
-                onPress={() =>
-                  navigation.navigate('ProductDetails', { _id: item._id })
-                }
+              <MotiView
+                from={{
+                  opacity: 0,
+                  translateY: 15,
+                }}
+                animate={{
+                  opacity: step >= 4 ? 1 : 0,
+                  translateY: step >= 4 ? 0 : 15,
+                  marginRight: isLeftColumn ? 22 : 0,
+                }}
+                onDidAnimate={(key, finished) => {
+                  if (key === 'opacity' && finished && step === 4) {
+                    setStep(5);
+                  }
+                }}
+                transition={{
+                  type: 'spring',
+                  damping: 12,
+                  stiffness: 30,
+                  delay: index * 200,
+                }}
               >
-                <MotiView
-                  from={{
-                    opacity: 0,
-                    translateY: 15,
-                  }}
-                  animate={{
-                    opacity: step >= 4 ? 1 : 0,
-                    translateY: step >= 4 ? 0 : 15,
-                    marginRight: isLeftColumn ? 22 : 0,
-                  }}
-                  onDidAnimate={(key, finished) => {
-                    if (key === 'opacity' && finished && step === 4) {
-                      setStep(5);
-                    }
-                  }}
-                  transition={{
-                    type: 'spring',
-                    damping: 12,
-                    stiffness: 30,
-                    delay: index * 200,
-                  }}
-                >
-                  <ProductCard
-                    _id={item._id}
-                    image={item.images[0]}
-                    name={item.name}
-                    brand={item.brand}
-                    average_rate={item.average_rating}
-                    price={Number(item.prices[0].price)}
-                    onPress={() => handleAddItemToTheCart(item)}
-                  />
-                </MotiView>
-              </TouchableOpacity>
+                <ProductCard
+                  _id={item._id}
+                  image={item.images[0]}
+                  name={item.name}
+                  brand={item.brand}
+                  average_rate={item.average_rating}
+                  price={Number(item.prices[0].price)}
+                  onPress={() => navigation.navigate('ProductDetails', { _id: item._id })}
+                />
+              </MotiView>
             );
           }}
         />

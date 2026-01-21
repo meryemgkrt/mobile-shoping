@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   View,
   Modal,
+  Alert,
 } from 'react-native';
 import React, { useState } from 'react';
 import { RootStackParamList } from '../types';
@@ -23,68 +24,107 @@ import {
   Info,
   X,
 } from 'lucide-react-native';
+import { useCartStore } from '../../store/cartStore';
 
 type ProductDetailsScreenProp = RouteProp<RootStackParamList, 'ProductDetails'>;
-type NavigationProp = NativeStackNavigationProp<
-  RootStackParamList,
-  'ProductDetails'
->;
+type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'ProductDetails'>;
 
 const { width, height } = Dimensions.get('window');
 
 const ProductDetailsScreen = () => {
+  // ✅ 1. TÜM HOOK'LARI EN BAŞTA ÇAĞIR
   const route = useRoute<ProductDetailsScreenProp>();
   const navigation = useNavigation<NavigationProp>();
-  const { _id } = route.params;
-  const productItem = ProductDataSample.find(item => item._id === _id);
-
+  const addToCart = useCartStore((state) => state.addToCart);
   const [selectedSize, setSelectedSize] = useState('M');
   const [quantity, setQuantity] = useState(1);
   const [modalVisible, setModalVisible] = useState(false);
 
+  // ✅ 2. HOOK'LARDAN SONRA DEĞİŞKENLER
+  const { _id } = route.params;
+  const productItem = ProductDataSample.find(item => item._id === _id);
   const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
+  // ✅ 3. FONKSİYONLAR
+  const handleAddToCart = () => {
+    if (!productItem) return;
+
+    for (let i = 0; i < quantity; i++) {
+      addToCart({
+        _id: productItem._id,
+        image: productItem.images[0],
+        name: productItem.name,
+        brand: productItem.brand,
+        price: productItem.prices[0].price,
+        selectedSize: selectedSize,
+      });
+    }
+
+    Alert.alert(
+      '🎉 Added to Cart!',
+      `${quantity}x ${productItem.name} (Size: ${selectedSize}) added to your cart.`,
+      [
+        { text: 'Continue Shopping', style: 'cancel' },
+        {
+          text: 'View Cart',
+          onPress: () => {
+            // Tab navigator içindeki Cart'a git
+            navigation.navigate('MainTabs' as never, { screen: 'Cart' } as never);
+          },
+        },
+      ]
+    );
+
+    setQuantity(1);
+  };
+
+  const handleGoBack = () => {
+    navigation.goBack();
+  };
+
+  // ✅ 4. EARLY RETURN EN SONDA
   if (!productItem) {
     return (
       <SafeAreaView style={styles.container}>
         <Text style={styles.errorText}>Product not found</Text>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={handleGoBack}
+          activeOpacity={0.7}
+        >
+          <ArrowLeft color={COLORS.primaryOrange} size={20} strokeWidth={2.5} />
+        </TouchableOpacity>
       </SafeAreaView>
     );
   }
 
-  const handleAddToCart = () => {
-    console.log('Added to cart:', {
-      product: productItem.name,
-      size: selectedSize,
-      quantity: quantity,
-    });
-  };
-
-  const handleGoBack = () => {
-    console.log('Back button pressed');
-    navigation.goBack();
-  };
-
+  // ✅ 5. RENDER
   return (
     <View style={{ flex: 1 }}>
       <SafeAreaView style={styles.container} edges={['top']}>
-        {/* Image Slider */}
         <MotiView
-          from={{ opacity: 0, scale: 0.95 }}
+          from={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ type: 'spring', delay: 100, damping: 15 }}
+          transition={{ 
+            type: 'timing', 
+            duration: 500,
+            delay: 50,
+          }}
           style={{ zIndex: 1 }}
         >
           <ImageSlider imageList={productItem.images} />
         </MotiView>
 
-        {/* Product Info */}
         <View style={styles.contentContainer}>
-          {/* Brand & Name with Info Button */}
           <MotiView
-            from={{ opacity: 0, translateY: 20 }}
-            animate={{ opacity: 1, translateY: 0 }}
-            transition={{ type: 'timing', delay: 200, duration: 400 }}
+            from={{ opacity: 0, translateY: 30, scale: 0.95 }}
+            animate={{ opacity: 1, translateY: 0, scale: 1 }}
+            transition={{ 
+              type: 'spring', 
+              delay: 150,
+              damping: 20,
+              stiffness: 90,
+            }}
           >
             <View style={styles.titleRow}>
               <View style={styles.titleSection}>
@@ -98,29 +138,25 @@ const ProductDetailsScreen = () => {
                 onPress={() => setModalVisible(true)}
                 activeOpacity={0.7}
               >
-                <Info
-                  color={COLORS.primaryOrange}
-                  size={20}
-                  strokeWidth={2.5}
-                />
+                <Info color={COLORS.primaryOrange} size={20} strokeWidth={2.5} />
               </TouchableOpacity>
             </View>
           </MotiView>
 
-          {/* Rating & Price */}
           <MotiView
-            from={{ opacity: 0, translateY: 20 }}
-            animate={{ opacity: 1, translateY: 0 }}
-            transition={{ type: 'timing', delay: 300, duration: 400 }}
+            from={{ opacity: 0, translateX: 20, scale: 0.9 }}
+            animate={{ opacity: 1, translateX: 0, scale: 1 }}
+            transition={{ 
+              type: 'spring', 
+              delay: 250,
+              damping: 18,
+              stiffness: 100,
+            }}
             style={styles.ratingPriceContainer}
           >
             <View style={styles.ratingContainer}>
               <View style={styles.ratingBadge}>
-                <Star
-                  size={14}
-                  color={COLORS.primaryOrange}
-                  fill={COLORS.primaryOrange}
-                />
+                <Star size={14} color={COLORS.primaryOrange} fill={COLORS.primaryOrange} />
                 <Text style={styles.ratingText}>
                   {productItem.average_rating}
                 </Text>
@@ -132,14 +168,17 @@ const ProductDetailsScreen = () => {
             <Text style={styles.priceText}>${productItem.prices[0].price}</Text>
           </MotiView>
 
-          {/* Size & Quantity Row */}
           <MotiView
-            from={{ opacity: 0, translateY: 20 }}
-            animate={{ opacity: 1, translateY: 0 }}
-            transition={{ type: 'timing', delay: 400, duration: 400 }}
+            from={{ opacity: 0, translateY: 25, scale: 0.92 }}
+            animate={{ opacity: 1, translateY: 0, scale: 1 }}
+            transition={{ 
+              type: 'spring', 
+              delay: 350,
+              damping: 20,
+              stiffness: 95,
+            }}
             style={styles.sizeQuantityRow}
           >
-            {/* Size Selection */}
             <View style={styles.sizeSection}>
               <Text style={styles.sectionTitle}>Size</Text>
               <View style={styles.sizesContainer}>
@@ -166,7 +205,6 @@ const ProductDetailsScreen = () => {
               </View>
             </View>
 
-            {/* Quantity */}
             <View style={styles.quantitySection}>
               <Text style={styles.sectionTitle}>Qty</Text>
               <View style={styles.quantityControls}>
@@ -175,11 +213,7 @@ const ProductDetailsScreen = () => {
                   onPress={() => setQuantity(Math.max(1, quantity - 1))}
                   activeOpacity={0.7}
                 >
-                  <Minus
-                    size={16}
-                    color={COLORS.primaryOrange}
-                    strokeWidth={2.5}
-                  />
+                  <Minus size={16} color={COLORS.primaryOrange} strokeWidth={2.5} />
                 </TouchableOpacity>
                 <Text style={styles.quantityText}>{quantity}</Text>
                 <TouchableOpacity
@@ -187,39 +221,34 @@ const ProductDetailsScreen = () => {
                   onPress={() => setQuantity(quantity + 1)}
                   activeOpacity={0.7}
                 >
-                  <Plus
-                    size={16}
-                    color={COLORS.primaryOrange}
-                    strokeWidth={2.5}
-                  />
+                  <Plus size={16} color={COLORS.primaryOrange} strokeWidth={2.5} />
                 </TouchableOpacity>
               </View>
             </View>
           </MotiView>
 
-          {/* Add to Cart Button */}
           <MotiView
-            from={{ opacity: 0, translateY: 20 }}
-            animate={{ opacity: 1, translateY: 0 }}
-            transition={{ type: 'timing', delay: 500, duration: 400 }}
-            style={{ marginTop: 8 }} // ✅ BUNU EKLE
+            from={{ opacity: 0, scale: 0.8, translateY: 20 }}
+            animate={{ opacity: 1, scale: 1, translateY: 0 }}
+            transition={{ 
+              type: 'spring', 
+              delay: 450,
+              damping: 15,
+              stiffness: 120,
+            }}
+            style={{ marginTop: 8 }} 
           >
             <TouchableOpacity
               style={styles.addToCartButton}
               onPress={handleAddToCart}
               activeOpacity={0.9}
             >
-              <ShoppingCart
-                size={20}
-                color={COLORS.primaryWhite}
-                strokeWidth={2}
-              />
+              <ShoppingCart size={20} color={COLORS.primaryWhite} strokeWidth={2} />
               <Text style={styles.addToCartText}>Add to Cart</Text>
             </TouchableOpacity>
           </MotiView>
         </View>
 
-        {/* Description Modal */}
         <Modal
           animationType="slide"
           transparent={true}
@@ -241,9 +270,9 @@ const ProductDetailsScreen = () => {
               <View style={styles.modalBody}>
                 <Text style={styles.modalProductName}>{productItem.name}</Text>
                 <Text style={styles.modalBrand}>{productItem.brand}</Text>
-
+                
                 <View style={styles.modalDivider} />
-
+                
                 <Text style={styles.modalDescriptionTitle}>Description</Text>
                 <Text style={styles.modalDescription}>
                   {productItem.description}
@@ -278,7 +307,6 @@ const ProductDetailsScreen = () => {
         </Modal>
       </SafeAreaView>
 
-      
       <TouchableOpacity
         style={styles.backButton}
         onPress={handleGoBack}
@@ -299,12 +327,12 @@ const styles = StyleSheet.create({
   },
   backButton: {
     position: 'absolute',
-    top: 60, 
+    top: 64,
     left: 16,
-    zIndex: 999, 
-    width: 42, 
+    zIndex: 999,
+    width: 42,
     height: 42,
-    borderRadius: 21,
+    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.98)',
@@ -313,8 +341,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 8,
     elevation: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(209, 120, 66, 0.1)',
+    borderWidth: 2,
+    borderColor: COLORS.primaryOrange,
   },
   contentContainer: {
     flex: 1,
@@ -462,20 +490,20 @@ const styles = StyleSheet.create({
     color: COLORS.primaryBlack,
   },
   addToCartButton: {
-  flexDirection: 'row',
-  backgroundColor: COLORS.primaryOrange,
-  borderRadius: 12,
-  paddingVertical: 14,
-  justifyContent: 'center',
-  alignItems: 'center',
-  gap: 8,
-  marginTop: 32,  
-  shadowColor: COLORS.primaryOrange,
-  shadowOffset: { width: 0, height: 3 },
-  shadowOpacity: 0.3,
-  shadowRadius: 8,
-  elevation: 5,
-},
+    flexDirection: 'row',
+    backgroundColor: COLORS.primaryOrange,
+    borderRadius: 12,
+    paddingVertical: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 36,
+    shadowColor: COLORS.primaryOrange,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+  },
   addToCartText: {
     fontSize: 16,
     fontFamily: FONT_FAMILY.poppins_bold,
@@ -487,8 +515,8 @@ const styles = StyleSheet.create({
     fontFamily: FONT_FAMILY.poppins_regular,
     color: COLORS.primaryGrey,
     textAlign: 'center',
+    marginTop: 100,
   },
-  // Modal Styles
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',

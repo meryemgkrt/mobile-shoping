@@ -5,6 +5,7 @@ import {
   Dimensions,
   ImageBackground,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 import React from 'react';
 import { ProductCardType } from '../types';
@@ -16,10 +17,10 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
 } from 'react-native-reanimated';
+import { useCartStore } from "../../store/cartStore";
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 40) / 2;
-
 
 const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 
@@ -32,59 +33,77 @@ const ProductCard: React.FC<ProductCardType> = ({
   price,
   onPress,
 }) => {
- 
   const scale = useSharedValue(1);
+  const addToCart = useCartStore(state => state.addToCart);
 
- 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
+
+  const handleAddToCart = () => {
+    if (!image || !_id) {
+      Alert.alert('Hata', 'Ürün bilgileri eksik!');
+      return;
+    }
+
+    addToCart({
+      _id,
+      image,
+      name: name || 'Ürün',
+      brand: brand || 'Bilinmeyen Marka',
+      price: price || 0,
+      selectedSize: 'M',
+    });
+    
+    Alert.alert('Başarılı', `${name} sepete eklendi!`, [{ text: 'Tamam' }]);
+  };
 
   return (
     <LinearGradient
       colors={['#FFFFFF', '#F8F8F8']}
       style={styles.linearGradient}
     >
-      <View style={styles.imageContainer}>
-        <ImageBackground
-          source={{ uri: image }}
-          style={styles.cardImage}
-          imageStyle={styles.imageStyle}
-          resizeMode="cover"
-        >
-          {average_rate ? (
-            <View style={styles.ratingBadge}>
-              <Star
-                size={12}
-                color={COLORS.primaryOrange}
-                fill={COLORS.primaryOrange}
-              />
-              <Text style={styles.ratingText}>{average_rate}</Text>
-            </View>
-          ) : null}
-        </ImageBackground>
-      </View>
-
-      <View style={styles.infoContainer}>
-        <Text style={styles.brandText}>{brand}</Text>
-        <Text style={styles.nameText} numberOfLines={2}>
-          {name}
-        </Text>
-        <View style={styles.footer}>
-          <Text style={styles.priceText}>${price}</Text>
-          
-       
-          <AnimatedTouchableOpacity
-            style={[styles.plusButton, animatedStyle]} 
-            onPressIn={() => { scale.value = withSpring(0.85); }} 
-            onPressOut={() => { scale.value = withSpring(1); }} 
-            onPress={onPress}
-            activeOpacity={1}
+      <TouchableOpacity onPress={onPress} activeOpacity={0.9}>
+        <View style={styles.imageContainer}>
+          <ImageBackground
+            source={{ uri: image }}
+            style={styles.cardImage}
+            imageStyle={styles.imageStyle}
+            resizeMode="cover"
           >
-            <Plus size={18} color={COLORS.primaryVeryWhite} strokeWidth={3} />
-          </AnimatedTouchableOpacity>
+            {average_rate ? (
+              <View style={styles.ratingBadge}>
+                <Star
+                  size={12}
+                  color={COLORS.primaryOrange}
+                  fill={COLORS.primaryOrange}
+                />
+                <Text style={styles.ratingText}>{average_rate}</Text>
+              </View>
+            ) : null}
+          </ImageBackground>
         </View>
-      </View>
+
+        <View style={styles.infoContainer}>
+          <Text style={styles.brandText}>{brand}</Text>
+          <Text style={styles.nameText} numberOfLines={2}>
+            {name}
+          </Text>
+          <View style={styles.footer}>
+            <Text style={styles.priceText}>${price}</Text>
+            
+            <AnimatedTouchableOpacity
+              style={[styles.plusButton, animatedStyle]}
+              onPressIn={() => { scale.value = withSpring(0.85); }}
+              onPressOut={() => { scale.value = withSpring(1); }}
+              onPress={handleAddToCart}
+              activeOpacity={1}
+            >
+              <Plus size={18} color={COLORS.primaryVeryWhite} strokeWidth={3} />
+            </AnimatedTouchableOpacity>
+          </View>
+        </View>
+      </TouchableOpacity>
     </LinearGradient>
   );
 };
